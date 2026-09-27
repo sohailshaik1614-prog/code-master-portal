@@ -357,8 +357,9 @@ export const Round2DebuggingPage: React.FC<Round2DebuggingPageProps> = ({ onNavi
             testCases={activeProblem.testCases}
             results={executionResult ? executionResult.results : null}
             isRunning={isRunning}
-            scoreAwarded={executionResult ? executionResult.scoreAwarded : undefined}
+            scoreAwarded={executionResult && executionResult.isBackendConnected ? executionResult.scoreAwarded : undefined}
             maxScore={activeProblem.marks}
+            isServiceUnavailable={Boolean(executionResult && !executionResult.isBackendConnected)}
           />
         </aside>
       </div>

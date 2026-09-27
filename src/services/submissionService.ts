@@ -6,6 +6,7 @@
 
 import { Submission } from '../types';
 import { supabase } from './supabaseClient';
+import { questionService } from './questionService';
 
 export interface SubmitMCQResponse {
   success: boolean;
@@ -103,24 +104,35 @@ export const submissionService = {
       console.warn('submit_mcq_round RPC invocation error:', e);
     }
 
-    // 3. Fallback: Save to round_submissions table directly
+    // 3. Fallback: Evaluate client answers against stored answer key so marks are never lost
+    const evaluated = questionService.evaluateMCQ(clientAnswers);
     const fallbackTimestamp = new Date().toISOString();
+    const isQualified = evaluated.totalScore >= Math.floor(evaluated.maxScore * 0.4) || evaluated.maxScore === 0;
+
     try {
       await supabase.from('round_submissions').insert({
         participant_id: participantId,
         round_id: roundId,
         submitted_at: fallbackTimestamp,
+        score: evaluated.totalScore,
+        max_score: evaluated.maxScore,
         status: isAutoSubmit ? 'Auto-Submitted' : 'Submitted',
       });
+      await supabase.from('participants').update({
+        round1_score: evaluated.totalScore,
+        round_1_score: evaluated.totalScore,
+        round1_status: 'Completed',
+      }).eq('id', participantId);
     } catch (e) {
       console.warn('round_submissions fallback notice:', e);
     }
 
     return {
       success: true,
-      score: 0,
-      maxScore: 0,
+      score: evaluated.totalScore,
+      maxScore: evaluated.maxScore,
       submissionTimestamp: fallbackTimestamp,
+      isQualified,
     };
   },
 

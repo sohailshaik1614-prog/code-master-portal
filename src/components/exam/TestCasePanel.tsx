@@ -8,6 +8,7 @@ interface TestCasePanelProps {
   isRunning: boolean;
   scoreAwarded?: number;
   maxScore?: number;
+  isServiceUnavailable?: boolean;
 }
 
 export const TestCasePanel: React.FC<TestCasePanelProps> = ({
@@ -16,6 +17,7 @@ export const TestCasePanel: React.FC<TestCasePanelProps> = ({
   isRunning,
   scoreAwarded,
   maxScore,
+  isServiceUnavailable,
 }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
 
@@ -48,7 +50,7 @@ export const TestCasePanel: React.FC<TestCasePanelProps> = ({
           <h4 style={{ margin: 0, fontSize: '1rem', color: '#fff' }}>Test Results & Cases</h4>
         </div>
 
-        {results && (
+        {results && results.length > 0 && !isServiceUnavailable && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span
               style={{
@@ -106,6 +108,24 @@ export const TestCasePanel: React.FC<TestCasePanelProps> = ({
             }}
           />
           <span>Executing test cases against sandbox...</span>
+        </div>
+      ) : isServiceUnavailable ? (
+        <div
+          style={{
+            padding: '32px 20px',
+            borderRadius: 'var(--radius-md)',
+            background: 'rgba(239, 68, 68, 0.08)',
+            border: '1px solid rgba(239, 68, 68, 0.25)',
+            textAlign: 'center',
+            margin: 'auto 0',
+          }}
+        >
+          <div style={{ color: '#ef4444', fontWeight: 700, fontSize: '0.95rem', marginBottom: '8px' }}>
+            Code execution service is temporarily unavailable.
+          </div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+            Please try again.
+          </div>
         </div>
       ) : testCases.length === 0 ? (
         <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', padding: '24px 0', textAlign: 'center' }}>

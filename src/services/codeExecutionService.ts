@@ -117,29 +117,18 @@ export const codeExecutionService = {
       console.warn('Supabase Edge Function execute_code unavailable:', e);
     }
 
-    // 2. Missing Backend Dependency Handling:
-    // As per specification: If the backend code execution function does not exist yet,
-    // create only the integration interface and clearly identify the missing backend dependency.
-    // Do not implement unsafe Python execution in the browser.
-    const safeSimulationResults: TestCaseResult[] = testCases.map((tc) => ({
-      testCaseId: tc.id,
-      passed: false,
-      isHidden: tc.isHidden,
-      input: tc.input,
-      expectedOutput: tc.isHidden ? '[HIDDEN TEST CASE]' : tc.expectedOutput,
-      actualOutput: '[PENDING BACKEND EXECUTION]',
-      errorMessage: 'Supabase Edge Function /functions/v1/execute_code is not deployed. Python code must be executed in a secure isolated environment.',
-    }));
-
+    // 2. Backend Dependency Error Handling:
+    // If backend Edge Function execute_code is not deployed or unreachable,
+    // do not return fake results or simulated outputs.
     return {
       success: false,
       totalTestCases: testCases.length,
       passedCount: 0,
-      failedCount: testCases.length,
+      failedCount: 0,
       scoreAwarded: 0,
       maxScore,
-      results: safeSimulationResults,
-      compilerOutput: 'Backend Dependency Notice: Supabase Edge Function `execute_code` is required for sandboxed Python execution.',
+      results: [],
+      compilerOutput: 'Code execution service is temporarily unavailable.\n\nPlease try again.',
       executionTimeMs: 0,
       isBackendConnected: false,
       edgeFunctionMissing: true,

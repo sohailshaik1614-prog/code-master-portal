@@ -346,7 +346,7 @@ export const questionService = {
    */
   evaluateMCQ(
     participantAnswers: Record<string, 'A' | 'B' | 'C' | 'D'>,
-    questions: MCQQuestion[]
+    questions?: MCQQuestion[]
   ): { totalScore: number; maxScore: number; correctCount: number; wrongCount: number; unattemptedCount: number } {
     let totalScore = 0;
     let maxScore = 0;
@@ -354,17 +354,26 @@ export const questionService = {
     let wrongCount = 0;
     let unattemptedCount = 0;
 
-    questions.forEach((q) => {
-      maxScore += q.marks;
+    const fullQuestions = this.getStoredMCQQuestions();
+    const fullQuestionsMap = new Map(fullQuestions.map((q) => [q.id, q]));
+    const targetQuestions = questions && questions.length > 0 ? questions : fullQuestions;
+
+    targetQuestions.forEach((q) => {
+      const fullQ = fullQuestionsMap.get(q.id) || q;
+      const expectedAnswer = fullQ.correctAnswer || q.correctAnswer;
+      const marks = Number(fullQ.marks || q.marks || 4);
+      const neg = Number(fullQ.negativeMarks ?? q.negativeMarks ?? 0);
+
+      maxScore += marks;
       const answer = participantAnswers[q.id];
 
       if (!answer) {
         unattemptedCount += 1;
-      } else if (answer === q.correctAnswer) {
-        totalScore += q.marks;
+      } else if (expectedAnswer && answer.trim().toUpperCase() === expectedAnswer.trim().toUpperCase()) {
+        totalScore += marks;
         correctCount += 1;
       } else {
-        totalScore -= Math.abs(q.negativeMarks || 0);
+        totalScore -= Math.abs(neg);
         wrongCount += 1;
       }
     });

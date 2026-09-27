@@ -78,7 +78,7 @@ export const CodeEditorView: React.FC<CodeEditorViewProps> = ({
             {isRunning ? (
               <>
                 <Sparkles size={14} className="animate-spin" />
-                Executing...
+                Running Test Cases...
               </>
             ) : (
               <>

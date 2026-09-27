@@ -568,15 +568,19 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Dispatch backend evaluation via RPC submit_mcq_round
     (async () => {
       const serverResult = await submissionService.submitMCQRound(participant.id, 1, answers, isAutoSubmit);
-      if (serverResult.success && serverResult.score !== undefined) {
+      if (serverResult.success && typeof serverResult.score === 'number') {
+        const finalScore = serverResult.score > 0 ? serverResult.score : evaluation.totalScore;
+        const finalMax = serverResult.maxScore > 0 ? serverResult.maxScore : evaluation.maxScore;
+        const isQualified = serverResult.isQualified ?? (finalScore >= Math.floor(finalMax * 0.4));
+
         const finalUpdated: Participant = {
           ...updatedParticipant,
-          round1Score: serverResult.score,
-          totalScore: serverResult.score + (participant.round2Score || 0),
+          round1Score: finalScore,
+          totalScore: finalScore + (participant.round2Score || 0),
           submissionTimestamp: serverResult.submissionTimestamp || submissionTimestamp,
-          status: serverResult.isQualified ? 'Round 2 Eligible' : 'Round 1 Completed',
-          round2Status: serverResult.isQualified ? 'Available' : 'Locked',
-          currentRound: serverResult.isQualified ? 2 : null,
+          status: isQualified ? 'Round 2 Eligible' : 'Round 1 Completed',
+          round2Status: isQualified ? 'Available' : 'Locked',
+          currentRound: isQualified ? 2 : null,
         };
         setCurrentParticipant(finalUpdated);
         participantService.saveParticipant(finalUpdated);
